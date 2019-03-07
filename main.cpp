@@ -8,6 +8,7 @@
 
 #include <string>
 #include <iostream>
+#include <bits/stdc++.h>
 
 
 // Constants
@@ -20,6 +21,9 @@ int main()
     // Initial strings of Shanghai and Ohio virus
     std::string seqX = "ECATCACCT";
     std::string seqY = "EGATACCC";
+
+    std::string alignedSeqX = "";
+    std::string alignedSeqY = "";
     
     // Initial variables
     int max_score = 0;
@@ -50,7 +54,6 @@ int main()
             {
                 char_match = true;
             }
-            std::cout << char_match;
             
             // Initially assume left case is the max score
             max_score = matrix[i-1][j] + GAP_PENALTY;
@@ -84,27 +87,67 @@ int main()
             }
             
             // Set score in matrix
-            matrix[i][j] = max_score;
-            
-//            std:: cout << matrix[i][j];
-        }
-        
-//        std::cout << "\n";
-    
+            matrix[i][j] = max_score;            
+        }    
     }
     
-    // Find max score path in matrix
-    
-    
-    std::cout << "\n";
+
+    // Find the absolute max and where it is located
+    int absolute_max = matrix[0][0];
+    int absolute_col = -1;
+    int absolute_row = -1;
+
     for(int i = 0; i < seqX.size(); i++)
     {
-        for(int j = 0; j < seqY.size(); j++)
-        {
-            std:: cout << matrix[i][j];
-        }
-        std::cout << "\n";
+      for(int j = 0; j < seqY.size(); j++)
+      {
+    	if(matrix[i][j] > absolute_max)
+    	{
+    	  absolute_max = matrix[i][j];
+    	  absolute_col = i;
+    	  absolute_row = j;
+	}
+      }
     }
+
+    // Trace back through the matrix and build our alignment
+    int i = absolute_col;
+    int j = absolute_row;
     
-    
+    while (true) {
+	if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
+    	  // Gap in left
+    	  absolute_max -= matrix[i-1][j] + GAP_PENALTY;
+	  i -= 1;
+    	}
+	
+    	else if (absolute_max == matrix[i][j-1] + GAP_PENALTY) {
+    	  // Gap in top
+    	  absolute_max += GAP_PENALTY;
+	  j -= 1;
+    	}
+	
+    	else if ((absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) || (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY)) {
+	  // Match the bases
+	  alignedSeqX += seqX[i];
+	  alignedSeqY += seqY[j];
+
+    	  if (absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) {
+    	    absolute_max -= MATCH_PENALTY;
+    	  }
+    	  else if (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY) {
+    	    absolute_max += MISMATCH_PENALTY;
+    	  }
+	  i -= 1;
+	  j -= 1;
+    	}
+	
+	// Check if we are done
+	if (absolute_max == 0) {
+	  reverse(alignedSeqX.begin(), alignedSeqX.end());
+	  reverse(alignedSeqY.begin(), alignedSeqY.end());
+	  break;
+	}
+    }
+    return 0;
 }
