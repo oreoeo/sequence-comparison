@@ -8,6 +8,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <bits/stdc++.h>
 
 
@@ -16,22 +17,49 @@ const int GAP_PENALTY = -2;
 const int MISMATCH_PENALTY = -1;
 const int MATCH_PENALTY = 1;
 
-int main()
-{
-    // Initial strings of Shanghai and Ohio virus
-    std::string seqX = "ECATCACCT";
-    std::string seqY = "EGATACCC";
+// FIXME: How to keep from overflowing the stack when declaring our matrix in the program?
+static int matrix[1506][1484];
 
+int main(int argc, char *argv[])
+{
+  if (argc != 3) {
+    std::cerr << "You must supply filenames for the sequences when running the program. Terminating.\n";
+    return 0;
+  }
+  else {
+    std::ifstream seqXFile(argv[1]);
+    std::ifstream seqYFile(argv[2]);
+
+    // Initial strings of Shanghai and Ohio virus
+    std::string seqX, seqY;
+
+    while (!seqXFile.eof()) {
+      std::string tmp;
+      seqXFile >> tmp;
+      seqX += tmp;
+    }
+
+    while (!seqYFile.eof()) {
+      std::string tmp;
+      seqYFile >> tmp;
+      seqY += tmp;
+    }
+
+    const int xSize = seqX.size();
+    const int ySize = seqY.size();
+
+    // Strings to hold the aligned sequences
     std::string alignedSeqX = "";
     std::string alignedSeqY = "";
-    
+
     // Initial variables
     int max_score = 0;
     bool char_match = false;
-    
+
+    std::cout << xSize << ' ' << ySize << '\n';
     // Form a 2D array of our sequences
-    int matrix[seqX.size()][seqY.size()];
-    
+    // static int matrix[xSize][ySize];
+
     // Init empty set
     for(int i = 0; i < seqX.size(); i++)
     {
@@ -41,6 +69,7 @@ int main()
     {
         matrix[0][i] = 0;
     }
+    std::cout << "Initialized\n";
     
     // Populate matrix
     for(int i = 1; i < seqX.size(); i++)
@@ -90,9 +119,11 @@ int main()
             matrix[i][j] = max_score;            
         }    
     }
+    std::cout << "Populated matrix\n";
     
 
     // Find the absolute max and where it is located
+    // TODO: Store locations of multiple absolute max scores for more than one possible solutions
     int absolute_max = matrix[0][0];
     int absolute_col = -1;
     int absolute_row = -1;
@@ -110,19 +141,26 @@ int main()
       }
     }
 
+    std::cout << "Found max coords\n";
+
     // Trace back through the matrix and build our alignment
     int i = absolute_col;
     int j = absolute_row;
-    
+
+    // FIXME: Add gaps into the aligned sequences
     while (true) {
 	if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
     	  // Gap in left
-    	  absolute_max -= matrix[i-1][j] + GAP_PENALTY;
+	  alignedSeqX += seqX[i];
+	  alignedSeqY += "_";
+    	  absolute_max += GAP_PENALTY;
 	  i -= 1;
     	}
 	
     	else if (absolute_max == matrix[i][j-1] + GAP_PENALTY) {
     	  // Gap in top
+	  alignedSeqX += "_";
+	  alignedSeqY += seqY[j];
     	  absolute_max += GAP_PENALTY;
 	  j -= 1;
     	}
@@ -149,5 +187,10 @@ int main()
 	  break;
 	}
     }
+    std::cout << "Aligned sequences\n";
+
+    // std::cout << alignedSeqX << '\n' << alignedSeqY << '\n';
+
     return 0;
+  }
 }
