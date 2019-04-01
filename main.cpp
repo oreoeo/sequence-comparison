@@ -18,7 +18,7 @@ const int MISMATCH_PENALTY = -1;
 const int MATCH_PENALTY = 1;
 
 // FIXME: How to keep from overflowing the stack when declaring our matrix in the program?
-static int matrix[1506][1484];
+static int matrix[1507][1485];
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +31,8 @@ int main(int argc, char *argv[])
     std::ifstream seqYFile(argv[2]);
 
     // Initial strings of Shanghai and Ohio virus
-    std::string seqX, seqY;
+    std::string seqX = "E";
+    std::string seqY = "E";
 
     while (!seqXFile.eof()) {
       std::string tmp;
@@ -45,6 +46,9 @@ int main(int argc, char *argv[])
       seqY += tmp;
     }
 
+    std::cout << seqX << "\n\n";
+    std::cout << seqY << "\n";
+
     const int xSize = seqX.size();
     const int ySize = seqY.size();
 
@@ -56,7 +60,6 @@ int main(int argc, char *argv[])
     int max_score = 0;
     bool char_match = false;
 
-    std::cout << xSize << ' ' << ySize << '\n';
     // Form a 2D array of our sequences
     // static int matrix[xSize][ySize];
 
@@ -69,7 +72,6 @@ int main(int argc, char *argv[])
     {
         matrix[0][i] = 0;
     }
-    std::cout << "Initialized\n";
     
     // Populate matrix
     for(int i = 1; i < seqX.size(); i++)
@@ -119,8 +121,6 @@ int main(int argc, char *argv[])
             matrix[i][j] = max_score;            
         }    
     }
-    std::cout << "Populated matrix\n";
-    
 
     // Find the absolute max and where it is located
     // TODO: Store locations of multiple absolute max scores for more than one possible solutions
@@ -128,68 +128,117 @@ int main(int argc, char *argv[])
     int absolute_col = -1;
     int absolute_row = -1;
 
-    for(int i = 0; i < seqX.size(); i++)
-    {
-      for(int j = 0; j < seqY.size(); j++)
-      {
-    	if(matrix[i][j] > absolute_max)
-    	{
-    	  absolute_max = matrix[i][j];
-    	  absolute_col = i;
-    	  absolute_row = j;
+   // for(int i = 0; i < seqY.size(); i++)
+   //  {
+   //    for(int j = 0; j < seqX.size(); j++)
+   //    {
+   //  	if(matrix[i][j] > absolute_max)
+   //  	{
+   //  	  absolute_max = matrix[j][i];
+   //  	  absolute_col = i;
+   //  	  absolute_row = j;
+   // 	}
+   //    }
+   //  }
+
+   // std::cout << absolute_col << ' ' << absolute_row << '\n';
+
+    // Trace back through the matrix and build our alignment
+
+    // Print matrix, for testing purposes
+    for (int j = 0; j < seqY.size(); ++j) {
+      for (int i=0; i < seqX.size(); ++i) {
+	// std::cout << matrix[i][j] << ' ';
+	if (matrix[i][j] > absolute_max) {
+	  absolute_max = matrix[i][j];
+	  absolute_col = i;
+	  absolute_row = j;
 	}
       }
     }
 
-    std::cout << "Found max coords\n";
-
-    // Trace back through the matrix and build our alignment
+    // std::cout << absolute_col << ' ' << absolute_row << '\n';
     int i = absolute_col;
     int j = absolute_row;
-
+    
     // FIXME: Add gaps into the aligned sequences
-    while (true) {
-	if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
-    	  // Gap in left
-	  alignedSeqX += seqX[i];
-	  alignedSeqY += "_";
-    	  absolute_max += GAP_PENALTY;
-	  i -= 1;
-    	}
+    while (absolute_max > 0) {
+      
+      if (absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) {
+	alignedSeqX += seqX[i];
+	alignedSeqY += seqY[j];
+	absolute_max = matrix[i-1][j-1];
+	std::cout << "MATCH\n";
+	i -= 1;
+	j -= 1;
+      }
+      else if (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY) {
+	alignedSeqX += seqX[i];
+	alignedSeqY += seqY[j];
+	absolute_max = matrix[i-1][j-1];
+	std::cout << "MISMATCH\n";
+	i -= 1;
+	j -= 1;
+      }
+      else if (absolute_max == matrix[i][j-1] + MISMATCH_PENALTY) {
+	alignedSeqX += "_";
+	alignedSeqY += seqY[j];
+	absolute_max = matrix[i][j-1];
+	std::cout << "GAP\n";
+	j -= 1;
+      }
+      else if (absolute_max == matrix[i-1][j] + MISMATCH_PENALTY) {
+	alignedSeqX += seqX[i];
+	alignedSeqY += "_";
+	absolute_max = matrix[i-1][j];
+	std::cout << "GAP\n";
+	i -= 1;
+      }
+      else {
+	continue;
+      }
+	// if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
+    	//   // Gap in left
+	//   alignedSeqX += seqX[i];
+	//   alignedSeqY += "_";
+    	//   absolute_max += GAP_PENALTY;
+	//   i -= 1;
+    	// }
 	
-    	else if (absolute_max == matrix[i][j-1] + GAP_PENALTY) {
-    	  // Gap in top
-	  alignedSeqX += "_";
-	  alignedSeqY += seqY[j];
-    	  absolute_max += GAP_PENALTY;
-	  j -= 1;
-    	}
+    	// else if (absolute_max == matrix[i][j+1] + GAP_PENALTY) {
+    	//   // Gap in top
+	//   alignedSeqX += "_";
+	//   alignedSeqY += seqY[j];
+    	//   absolute_max += GAP_PENALTY;
+	//   j += 1;
+    	// }
 	
-    	else if ((absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) || (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY)) {
-	  // Match the bases
-	  alignedSeqX += seqX[i];
-	  alignedSeqY += seqY[j];
+    	// else if ((absolute_max == matrix[i-1][j+1] + MATCH_PENALTY) || (absolute_max == matrix[i-1][j+1] + MISMATCH_PENALTY)) {
+	//   // Match the bases
+	//   alignedSeqX += seqX[i];
+	//   alignedSeqY += seqY[j];
+	//   break;
 
-    	  if (absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) {
-    	    absolute_max -= MATCH_PENALTY;
-    	  }
-    	  else if (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY) {
-    	    absolute_max += MISMATCH_PENALTY;
-    	  }
-	  i -= 1;
-	  j -= 1;
-    	}
-	
-	// Check if we are done
-	if (absolute_max == 0) {
-	  reverse(alignedSeqX.begin(), alignedSeqX.end());
-	  reverse(alignedSeqY.begin(), alignedSeqY.end());
-	  break;
-	}
+    	//   if (absolute_max == matrix[i-1][j+1] + MATCH_PENALTY) {
+    	//     absolute_max -= MATCH_PENALTY;
+	//     break;
+    	//   }
+	  
+    	//   else if (absolute_max == matrix[i-1][j+1] + MISMATCH_PENALTY) {
+    	//     absolute_max += MISMATCH_PENALTY;
+	//     break;
+    	//   }
+	  
+	//   i -= 1;
+	//   j -= 1;
+    	// }
     }
-    std::cout << "Aligned sequences\n";
 
-    // std::cout << alignedSeqX << '\n' << alignedSeqY << '\n';
+    reverse(alignedSeqX.begin(), alignedSeqX.end());
+    reverse(alignedSeqY.begin(), alignedSeqY.end());
+
+
+    std::cout << alignedSeqX << '\n' << alignedSeqY << '\n';
 
     return 0;
   }
