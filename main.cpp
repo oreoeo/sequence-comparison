@@ -14,8 +14,8 @@
 
 // Constants
 const int GAP_PENALTY = -2;
-const int MISMATCH_PENALTY = -1;
-const int MATCH_PENALTY = 1;
+const int MISMATCH_PENALTY = -3;
+const int MATCH_PENALTY = 3;
 
 // FIXME: How to keep from overflowing the stack when declaring our matrix in the program?
 static int matrix[1507][1485];
@@ -45,9 +45,6 @@ int main(int argc, char *argv[])
       seqYFile >> tmp;
       seqY += tmp;
     }
-
-    std::cout << seqX << "\n\n";
-    std::cout << seqY << "\n";
 
     const int xSize = seqX.size();
     const int ySize = seqY.size();
@@ -128,110 +125,68 @@ int main(int argc, char *argv[])
     int absolute_col = -1;
     int absolute_row = -1;
 
-   // for(int i = 0; i < seqY.size(); i++)
-   //  {
-   //    for(int j = 0; j < seqX.size(); j++)
-   //    {
-   //  	if(matrix[i][j] > absolute_max)
-   //  	{
-   //  	  absolute_max = matrix[j][i];
-   //  	  absolute_col = i;
-   //  	  absolute_row = j;
-   // 	}
-   //    }
-   //  }
-
-   // std::cout << absolute_col << ' ' << absolute_row << '\n';
-
-    // Trace back through the matrix and build our alignment
-
-    // Print matrix, for testing purposes
+    // Navigate through the matrix finding the max values
     for (int j = 0; j < seqY.size(); ++j) {
       for (int i=0; i < seqX.size(); ++i) {
-	// std::cout << matrix[i][j] << ' ';
+	// std::cout << matrix[i][j] << ' '; // Printing the matrix for testing
 	if (matrix[i][j] > absolute_max) {
 	  absolute_max = matrix[i][j];
 	  absolute_col = i;
 	  absolute_row = j;
 	}
       }
+
+      // std::cout << '\n'; // Printing the matrix for testing
     }
 
-    // std::cout << absolute_col << ' ' << absolute_row << '\n';
     int i = absolute_col;
     int j = absolute_row;
     
     // FIXME: Add gaps into the aligned sequences
     while (absolute_max > 0) {
-      
+      // DIAGONAL
+      // Matching base
       if (absolute_max == matrix[i-1][j-1] + MATCH_PENALTY) {
 	alignedSeqX += seqX[i];
 	alignedSeqY += seqY[j];
+
 	absolute_max = matrix[i-1][j-1];
-	std::cout << "MATCH\n";
+
 	i -= 1;
 	j -= 1;
       }
+      // Mismatching base
       else if (absolute_max == matrix[i-1][j-1] + MISMATCH_PENALTY) {
 	alignedSeqX += seqX[i];
 	alignedSeqY += seqY[j];
+
 	absolute_max = matrix[i-1][j-1];
-	std::cout << "MISMATCH\n";
+	
 	i -= 1;
 	j -= 1;
       }
-      else if (absolute_max == matrix[i][j-1] + MISMATCH_PENALTY) {
+
+      // TOP GAP
+      else if (absolute_max == matrix[i][j-1] + GAP_PENALTY) {
+	break;
 	alignedSeqX += "_";
 	alignedSeqY += seqY[j];
+
 	absolute_max = matrix[i][j-1];
-	std::cout << "GAP\n";
+
 	j -= 1;
       }
-      else if (absolute_max == matrix[i-1][j] + MISMATCH_PENALTY) {
+
+      // SIDE GAP
+      else if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
+	break;
 	alignedSeqX += seqX[i];
 	alignedSeqY += "_";
+
 	absolute_max = matrix[i-1][j];
-	std::cout << "GAP\n";
+	
 	i -= 1;
       }
-      else {
-	continue;
-      }
-	// if (absolute_max == matrix[i-1][j] + GAP_PENALTY) {
-    	//   // Gap in left
-	//   alignedSeqX += seqX[i];
-	//   alignedSeqY += "_";
-    	//   absolute_max += GAP_PENALTY;
-	//   i -= 1;
-    	// }
-	
-    	// else if (absolute_max == matrix[i][j+1] + GAP_PENALTY) {
-    	//   // Gap in top
-	//   alignedSeqX += "_";
-	//   alignedSeqY += seqY[j];
-    	//   absolute_max += GAP_PENALTY;
-	//   j += 1;
-    	// }
-	
-    	// else if ((absolute_max == matrix[i-1][j+1] + MATCH_PENALTY) || (absolute_max == matrix[i-1][j+1] + MISMATCH_PENALTY)) {
-	//   // Match the bases
-	//   alignedSeqX += seqX[i];
-	//   alignedSeqY += seqY[j];
-	//   break;
-
-    	//   if (absolute_max == matrix[i-1][j+1] + MATCH_PENALTY) {
-    	//     absolute_max -= MATCH_PENALTY;
-	//     break;
-    	//   }
-	  
-    	//   else if (absolute_max == matrix[i-1][j+1] + MISMATCH_PENALTY) {
-    	//     absolute_max += MISMATCH_PENALTY;
-	//     break;
-    	//   }
-	  
-	//   i -= 1;
-	//   j -= 1;
-    	// }
     }
 
     reverse(alignedSeqX.begin(), alignedSeqX.end());
@@ -239,6 +194,7 @@ int main(int argc, char *argv[])
 
 
     std::cout << alignedSeqX << '\n' << alignedSeqY << '\n';
+    std::cout << alignedSeqX.size() << ' ' << alignedSeqY.size() << '\n';
 
     return 0;
   }
