@@ -101,10 +101,14 @@ int main(int argc, char *argv[])
   else {
     std::ifstream seqXFile(argv[1]);
     std::ifstream seqYFile(argv[2]);
+    std::ifstream blastQFile("blast_qseq.txt");
+    std::ifstream blastHFile("blast_hseq.txt");
 
     // Initial strings of Shanghai and Ohio virus
     std::string seqX = "E";
     std::string seqY = "E";
+    std::string blastQ = "";
+    std::string blastH = "";
 
     while (!seqXFile.eof()) {
       std::string tmp;
@@ -118,6 +122,18 @@ int main(int argc, char *argv[])
       seqY += tmp;
     }
 
+    while (!blastQFile.eof()) {
+      std::string tmp;
+      blastQFile >> tmp;
+      blastQ += tmp;
+    }
+
+    while (!blastHFile.eof()) {
+      std::string tmp;
+      blastHFile >> tmp;
+      blastH += tmp;
+    }
+    
     const int xSize = seqX.size();
     const int ySize = seqY.size();
 
@@ -125,6 +141,7 @@ int main(int argc, char *argv[])
 
     // Front of the vector will always be the original amino acid sequences
     aminoAcidSequences.push_back(std::pair<std::string,std::string>(transcribeToAminoAcidSequence(seqX),transcribeToAminoAcidSequence(seqY)));
+    aminoAcidSequences.push_back(std::pair<std::string,std::string>(transcribeToAminoAcidSequence(blastQ),transcribeToAminoAcidSequence(blastH)));    
 
     // Strings to hold the aligned sequences
     std::string alignedSeqX = "";
@@ -304,20 +321,35 @@ int main(int argc, char *argv[])
       outFile << "--------------------\n";
 
       outFile << "Original SeqX amino acid sequence: " << aminoAcidSequences[0].first << '\n';
-      outFile << "Aligned SeqX amino acid sequence: " << aminoAcidSequences[i+1].first << '\n';
-      outFile << "SeqX indels: " << countIndels(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
-      outFile << "SeqX synonymous mutations: " << countSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
-      outFile << "SeqX non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
+      outFile << "Aligned SeqX amino acid sequence: " << aminoAcidSequences[i+2].first << '\n';
+      outFile << "SeqX indels: " << countIndels(aminoAcidSequences[0].first, aminoAcidSequences[i+2].first) << '\n';
+      outFile << "SeqX synonymous mutations: " << countSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+2].first) << '\n';
+      outFile << "SeqX non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+2].first) << '\n';
       outFile << "--------------------\n";
 
 
       outFile << "Original SeqY amino acid sequence: " << aminoAcidSequences[0].second << '\n';
-      outFile << "Aligned SeqY amino acid sequence: " << aminoAcidSequences[i+1].second << '\n';
-      outFile << "SeqY indels: " << countIndels(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
-      outFile << "SeqY synonymous mutations: " << countSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
-      outFile << "SeqY non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "Aligned SeqY amino acid sequence: " << aminoAcidSequences[i+2].second << '\n';
+      outFile << "SeqY indels: " << countIndels(aminoAcidSequences[0].second, aminoAcidSequences[i+2].second) << '\n';
+      outFile << "SeqY synonymous mutations: " << countSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+2].second) << '\n';
+      outFile << "SeqY non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+2].second) << '\n';
       outFile << "====================\n";
     }
+
+    outFile << "BLAST Results\n";
+    outFile << "BlastQ: " << blastQ << '\n';
+    outFile << "BlastH: " << blastH << '\n';
+    outFile << "--------------------\n";
+
+    outFile << "BlastQ indels: " << countIndels(aminoAcidSequences[0].first, aminoAcidSequences[1].first) << '\n';
+    outFile << "BlastQ synonymous mutations: " << countSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[1].first) << '\n';
+    outFile << "BlastQ non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[1].first) << '\n';
+    outFile << "--------------------\n";
+
+    outFile << "BlastH indels: " << countIndels(aminoAcidSequences[0].second, aminoAcidSequences[1].second) << '\n';
+    outFile << "BlastH synonymous mutations: " << countSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[1].second) << '\n';
+    outFile << "BlastH non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[1].second) << '\n';
+    outFile << "====================\n";
 
     return 0;
   }
