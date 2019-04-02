@@ -301,13 +301,22 @@ int main(int argc, char *argv[])
       outFile << "SeqX: " << alignedSequences[i].first << '\n';
       outFile << "SeqY: " << alignedSequences[i].second << '\n';
       outFile << "Length of alignment: " << alignedSequences[i].first.size() << '\n';
-      outFile << "SeqX amino acid sequence: " << aminoAcidSequences[i+1].first << '\n';
-      outFile << "SeqY amino acid sequence: " << aminoAcidSequences[i+1].second << '\n';
-      outFile << "Number of indels: " << countIndels(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
-      outFile << "Number of synonymous mutations: " << countSynMutations(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
-      outFile << "Number of non synonymous mutations: " << countNonSynMutations(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
       outFile << "--------------------\n";
-      // TODO: Add table summarizing the types of changes made within the sequences
+
+      outFile << "Original SeqX amino acid sequence: " << aminoAcidSequences[0].first << '\n';
+      outFile << "Aligned SeqX amino acid sequence: " << aminoAcidSequences[i+1].first << '\n';
+      outFile << "SeqX indels: " << countIndels(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
+      outFile << "SeqX synonymous mutations: " << countSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
+      outFile << "SeqX non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].first, aminoAcidSequences[i+1].first) << '\n';
+      outFile << "--------------------\n";
+
+
+      outFile << "Original SeqY amino acid sequence: " << aminoAcidSequences[0].second << '\n';
+      outFile << "Aligned SeqY amino acid sequence: " << aminoAcidSequences[i+1].second << '\n';
+      outFile << "SeqY indels: " << countIndels(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "SeqY synonymous mutations: " << countSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "SeqY non-synonymous mutations: " << countNonSynMutations(aminoAcidSequences[0].second, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "====================\n";
     }
 
     return 0;
