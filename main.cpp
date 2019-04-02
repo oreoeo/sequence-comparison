@@ -12,11 +12,82 @@
 #include <utility>
 #include <bits/stdc++.h>
 
+std::string transcribeToAminoAcidSequence(const std::string&);
+int countIndels(const std::string&, const std::string&);
+int countSynMutations(const std::string&, const std::string&);
+int countNonSynMutations(const std::string&, const std::string&);
 
 // Constants
 const int GAP_PENALTY = -2;
 const int MISMATCH_PENALTY = -1;
 const int MATCH_PENALTY = 1;
+
+const std::map<std::string, std::string> AMINO_ACIDS {
+						      {"UUU","Phe"},
+						      {"UUC","Phe"},
+						      {"UUA","Leu"},
+						      {"UUG","Leu"},
+						      {"CUU","Leu"},
+						      {"CUC","Leu"},
+						      {"CUA","Leu"},
+						      {"CUG","Leu"},
+						      {"UCU","Ser"},
+						      {"UCC","Ser"},
+						      {"UCA","Ser"},
+						      {"UCG","Ser"},
+						      {"UAU","Tyr"},
+						      {"UAC","Tyr"},
+						      {"UAA","Stp"},
+						      {"UAG","Stp"},
+						      {"UGU","Cys"},
+						      {"UGC","Cys"},
+						      {"UGA","Stp"},
+						      {"UGG","Trp"},
+						      {"CCU","Pro"},
+						      {"CCC","Pro"},
+						      {"CCA","Pro"},
+						      {"CCG","Pro"},
+						      {"CAU","His"},
+						      {"CAC","His"},
+						      {"CAA","Gln"},
+						      {"CAG","Gln"},
+						      {"CGU","Arg"},
+						      {"CGC","Arg"},
+						      {"CGA","Arg"},
+						      {"CGG","Arg"},
+						      {"AUU","Ile"},
+						      {"AUC","Ile"},
+						      {"AUA","Ile"},
+						      {"AUG","Met"},
+						      {"ACU","Thr"},
+						      {"ACC","Thr"},
+						      {"ACA","Thr"},
+						      {"ACG","Thr"},
+						      {"AAU","Asn"},
+						      {"AAC","Asn"},
+						      {"AAA","Lys"},
+						      {"AAG","Lys"},
+						      {"AGU","Ser"},
+						      {"AGC","Ser"},
+						      {"AGA","Arg"},
+						      {"AGG","Arg"},
+						      {"GUU","Val"},
+						      {"GUC","Val"},
+						      {"GUA","Val"},
+						      {"GUG","Val"},
+						      {"GCU","Ala"},
+						      {"GCC","Ala"},
+						      {"GCA","Ala"},
+						      {"GCG","Ala"},
+						      {"GAU","Asp"},
+						      {"GAC","Asp"},
+						      {"GAA","Glu"},
+						      {"GAG","Glu"},
+						      {"GGU","Gly"},
+						      {"GGC","Gly"},
+						      {"GGA","Gly"},
+						      {"GGG","Gly"}
+};
 
 // FIXME: How to keep from overflowing the stack when declaring our matrix in the program?
 static int matrix[1507][1485];
@@ -49,6 +120,11 @@ int main(int argc, char *argv[])
 
     const int xSize = seqX.size();
     const int ySize = seqY.size();
+
+    std::vector<std::pair<std::string,std::string>> aminoAcidSequences;
+
+    // Front of the vector will always be the original amino acid sequences
+    aminoAcidSequences.push_back(std::pair<std::string,std::string>(transcribeToAminoAcidSequence(seqX),transcribeToAminoAcidSequence(seqY)));
 
     // Strings to hold the aligned sequences
     std::string alignedSeqX = "";
@@ -121,7 +197,6 @@ int main(int argc, char *argv[])
     }
 
     // Find the absolute max and where it is located
-    // TODO: Store locations of multiple absolute max scores for more than one possible solutions
     int absolute_max = matrix[0][0];
     int absolute_col = -1;
     int absolute_row = -1;
@@ -143,9 +218,9 @@ int main(int argc, char *argv[])
     }
 
     // Store the absolute max score we found in our matrix
+    // Check for other occurences of the max score in the matrix
     max_score_locations.push_back(std::pair<int, int>(absolute_col, absolute_row));
 
-    // Check if there were any other occurances of the max score in the matrix
     for (int j = 0; j < seqY.size(); ++j) {
       for (int i = 0; i < seqX.size(); ++i) {
 	if ((matrix[i][j] == absolute_max) &&
@@ -155,6 +230,7 @@ int main(int argc, char *argv[])
       }
     }
 
+    // Hold our solution(s) and trace back to find what they are
     std::vector<std::pair<std::string,std::string>> alignedSequences;
 
     for (int i = 0; i < max_score_locations.size(); ++i) {
@@ -213,11 +289,80 @@ int main(int argc, char *argv[])
       reverse(alignedSeqY.begin(), alignedSeqY.end());
 
       alignedSequences.push_back(std::pair<std::string,std::string>(alignedSeqX, alignedSeqY));
+
+      aminoAcidSequences.push_back(std::pair<std::string,std::string>(transcribeToAminoAcidSequence(alignedSeqX),transcribeToAminoAcidSequence(alignedSeqY)));
     }
 
-    for (int i = 0; i < alignedSequences.size(); ++i)
-      std::cout << alignedSequences[i].first << '\n' << alignedSequences[i].second << "\n\n";
+    // Output our alignment findings
+    std::ofstream outFile("aligned_sequences.txt");
+
+    for (int i = 0; i < alignedSequences.size(); ++i) {
+      outFile << "Alignment " << i << '\n';
+      outFile << "SeqX: " << alignedSequences[i].first << '\n';
+      outFile << "SeqY: " << alignedSequences[i].second << '\n';
+      outFile << "Length of alignment: " << alignedSequences[i].first.size() << '\n';
+      outFile << "SeqX amino acid sequence: " << aminoAcidSequences[i+1].first << '\n';
+      outFile << "SeqY amino acid sequence: " << aminoAcidSequences[i+1].second << '\n';
+      outFile << "Number of indels: " << countIndels(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "Number of synonymous mutations: " << countSynMutations(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "Number of non synonymous mutations: " << countNonSynMutations(aminoAcidSequences[i+1].first, aminoAcidSequences[i+1].second) << '\n';
+      outFile << "--------------------\n";
+      // TODO: Add table summarizing the types of changes made within the sequences
+    }
 
     return 0;
   }
+}
+
+std::string transcribeToAminoAcidSequence(const std::string& nuc_seq) {
+  std::string aa_seq = "";
+
+  for (int i = 0; i+3 < nuc_seq.size(); i+=3)
+    aa_seq += AMINO_ACIDS.find(nuc_seq.substr(i,3))->second;
+
+  return aa_seq;
+}
+
+int countIndels(const std::string& aaSeqX, const std::string& aaSeqY) {
+  if (aaSeqX.size() >= aaSeqY.size())
+    return aaSeqX.size() - aaSeqY.size();
+  
+  else if (aaSeqY.size() > aaSeqX.size()) 
+    return aaSeqY.size() - aaSeqX.size();
+
+  return -1;
+}
+
+int countSynMutations(const std::string& aaSeqX, const std::string& aaSeqY) {
+  int synMutation = 0;
+
+  int smallerSize;
+
+  if (aaSeqX.size() <= aaSeqY.size())
+    smallerSize = aaSeqX.size();
+  else
+    smallerSize = aaSeqY.size();
+
+  for (int i = 0; i+3 < smallerSize; i+=3)
+    if (aaSeqX.substr(i,3) == aaSeqY.substr(i,3))
+      synMutation += 1;
+  
+  return synMutation;
+}
+
+int countNonSynMutations(const std::string& aaSeqX, const std::string& aaSeqY) {
+  int nonSynMutation = 0;
+
+  int smallerSize;
+
+  if (aaSeqX.size() <= aaSeqY.size())
+    smallerSize = aaSeqX.size();
+  else
+    smallerSize = aaSeqY.size();
+
+  for (int i = 0; i+3 < smallerSize; i+=3)
+    if (aaSeqX.substr(i,3) != aaSeqY.substr(i,3))
+      nonSynMutation += 1;
+  
+  return nonSynMutation;
 }
